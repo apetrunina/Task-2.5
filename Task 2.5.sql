@@ -1,24 +1,25 @@
---Задание 1
-
-CREATE TABLE products_plan (
-  product_id INT,   -- идентификатор продукта
-  shop_name VARCHAR(100),   -- название магазина
-  plan_cnt INT,   -- количество планируемых продаж
-  plan_date DATE,   -- дата планирования
-  FOREIGN KEY (product_id) REFERENCES products(product_id)
+-- Задание 1
+CREATE TABLE shops (
+  shop_id INT PRIMARY KEY,
+  shop_name VARCHAR(100)
 );
 
---Задание 2
-
-SELECT p.shop_name, p.product_name, 
-       SUM(sales_cnt) AS sales_fact, 
-       SUM(pp.plan_cnt) AS sales_plan, 
-       SUM(sales_cnt)/SUM(pp.plan_cnt) AS sales_fact_to_plan, 
-       SUM(sales_cnt * pr.price) AS income_fact, 
-       SUM(pp.plan_cnt * pr.price) AS income_plan, 
-       SUM(sales_cnt * pr.price) / SUM(pp.plan_cnt * pr.price) AS income_fact_to_plan
-FROM shop_dns s
-JOIN products p ON s.product_id = p.product_id
-JOIN plan pp ON p.product_id = pp.product_id
-JOIN products pr ON p.product_id = pr.product_id
-GROUP BY p.shop_name, p.product_name;
+-- Задание 2
+WITH all_sales AS (
+  SELECT shop_id, product_id, sales_cnt
+  FROM sales
+  UNION ALL
+  SELECT shop_id, product_id, plan_cnt
+  FROM plan
+)
+SELECT sh.shop_name, pr.product_name, 
+       SUM(s.sales_cnt) AS sales_fact, 
+       SUM(p.plan_cnt) AS sales_plan, 
+       SUM(s.sales_cnt)/SUM(p.plan_cnt) AS sales_fact_to_plan, 
+       SUM(s.sales_cnt * pr.price) AS income_fact, 
+       SUM(p.plan_cnt * pr.price) AS income_plan, 
+       SUM(s.sales_cnt * pr.price) / SUM(p.plan_cnt * pr.price) AS income_fact_to_plan
+FROM all_sales s
+JOIN products pr ON s.product_id = pr.product_id
+JOIN shops sh ON s.shop_id = sh.shop_id
+GROUP BY sh.shop_name, pr.product_name;
